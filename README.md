@@ -132,6 +132,12 @@ git push -u origin main
 3. Make sure to update the `.env` file with your Groq API key (can be found [here](https://groq.com/), the free version is more than enough for our purposes) and any other necessary configurations. IMPORTANT: Do not share your `.env` file publicly as it contains sensitive information. It is included in `.gitignore` to prevent accidental commits. (It should never be included in the repos and appear here only for demonstration purposes).
 4. Have fun and be creative!
 
+## Project parts
+
+| Part | Folder | Instructions |
+|---|---|---|
+| Part 1: Text Processing and EDA | `project_progress/part_1` | [README](project_progress/part_1/README.md) |
+
 ## Attribution:
 The project is adapted from the following sources:
 - [IRWA Template 2021](https://github.com/irwa-labs/search-engine-web-app)
