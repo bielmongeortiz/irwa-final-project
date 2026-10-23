@@ -6,6 +6,8 @@
 |------|-------------|
 | `IRWA_part_1.ipynb` | Code and results: corpus loading, pre-processing pipeline, handling of each field, EDA |
 | `../../myapp/search/preprocessing.py` | The pre-processing code itself |
+| `/figures` | Figures folder, where all the output images are found |
+
 
 The pre-processing code is not in the notebook but in `myapp/search/preprocessing.py`, so that the later indexing and web application can import the same functions. The notebook imports it and shows its results.
 
