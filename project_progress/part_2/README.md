@@ -138,3 +138,4 @@ recall_at_k(labels, 3, 4)      # 0.5
 | 6.2 | The same metrics counting the unjudged documents as non-relevant |
 | 7 | Creation of `test_queries_labels.csv` |
 | 7.1 | Metrics of our test queries |
+| 8 | Figures used as evidence in the limitations section of the report |
