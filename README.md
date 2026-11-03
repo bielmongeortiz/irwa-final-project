@@ -137,6 +137,7 @@ git push -u origin main
 | Part | Folder | Instructions |
 |---|---|---|
 | Part 1: Text Processing and EDA | `project_progress/part_1` | [README](project_progress/part_1/README.md) |
+| Part 2: Indexing and Evaluation | `project_progress/part_2` | [README](project_progress/part_2/README.md) |
 
 ## Attribution:
 The project is adapted from the following sources:
