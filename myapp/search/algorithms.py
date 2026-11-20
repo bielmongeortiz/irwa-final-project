@@ -64,6 +64,11 @@ def rank_tfidf(query_terms: List[str], index: InvertedIndex, candidates: Set[str
     return ranked
 
 
+# Registry of ranking functions. Every ranker has the signature
+# (query_terms, index, candidates) -> [(pid, score)] sorted by descending score.
+RANKINGS_LIST = {"tfidf": rank_tfidf}
+
+
 def search_in_corpus(query: str, index: InvertedIndex, top_k: int = None, ranking: str = "tfidf") -> List[Tuple[str, float]]:
     """
     Full pipeline: process query -> AND retrieval -> ranking.
@@ -71,13 +76,13 @@ def search_in_corpus(query: str, index: InvertedIndex, top_k: int = None, rankin
     :param query: raw query text
     :param index: the InvertedIndex
     :param top_k: keep only the best k results (None = all)
-    :param ranking: ranking function name; currently only "tfidf"
+    :param ranking: a key of RANKINGS_LIST
     :return: [(pid, score)] sorted by descending score
     """
+    ranker = RANKINGS_LIST.get(ranking)
+    if ranker is None:
+        raise ValueError(f"Unknown ranking function: {ranking}. Available: {sorted(RANKINGS_LIST)}")
     terms = process_query(query)
     candidates = conjunctive_retrieve(terms, index)
-    if ranking == "tfidf":
-        ranked = rank_tfidf(terms, index, candidates)
-    else:
-        raise ValueError(f"Unknown ranking function: {ranking}")
-    return ranked[:top_k] if top_k else ranked
+    ranked = ranker(terms, index, candidates)
+    return ranked if top_k is None else ranked[:top_k]
