@@ -87,7 +87,7 @@ def rank_bm25(query_terms: List[str], index: InvertedIndex, candidates: Set[str]
               k1: float = 1.5, b: float = 0.75) -> List[Tuple[str, float]]:
     """
     Rank candidate documents with Okapi BM25.
-    idf(t) = log(1 + (N - df + 0.5) / (df + 0.5)), which is never negative.
+    idf(t) = log(N / df), as in the lecture definition.
     score(q, d) = sum over the distinct query terms of idf(t) * tf * (k1 + 1) / (tf + k1 * (1 - b + b * |d| / avgdl))
 
     :param k1: term frequency saturation
@@ -101,7 +101,7 @@ def rank_bm25(query_terms: List[str], index: InvertedIndex, candidates: Set[str]
         if tid is None:
             continue
         df = index.df[tid]
-        idf = math.log(1 + (index.n_docs - df + 0.5) / (df + 0.5))
+        idf = math.log(index.n_docs / df)
         plist = index.postings[tid]
         for pid in candidates:
             tf = plist.get(pid)
