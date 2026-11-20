@@ -1,11 +1,5 @@
 import math
 
-# Evaluation metrics. Definitions follow the course slides (IRWA-04-Evaluation).
-#
-# `labels` is always the list of relevance labels of the results, in ranking order.
-# Example: [1, 0, 1] means that the 1st and 3rd results are relevant and the 2nd is not.
-
-
 def labels_in_rank_order(ranked_pids, judgments, drop_unjudged=True):
     """
     Turn a ranking of pids into the list of its relevance labels.
