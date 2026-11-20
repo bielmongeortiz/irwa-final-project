@@ -64,9 +64,57 @@ def rank_tfidf(query_terms: List[str], index: InvertedIndex, candidates: Set[str
     return ranked
 
 
+LENGTHS_BY_INDEX = {}
+
+
+def document_lengths(index: InvertedIndex) -> Tuple[dict, float]:
+    """
+    Length of each document (number of indexed terms, counting repetitions) and the average length.
+    Computed once per index from the postings and cached, so the index file does not change.
+    """
+    key = id(index)
+    if key not in LENGTHS_BY_INDEX:
+        lengths = Counter()
+        for plist in index.postings.values():
+            for pid, tf in plist.items():
+                lengths[pid] += tf
+        avg = sum(lengths.values()) / len(lengths) if lengths else 0.0
+        LENGTHS_BY_INDEX[key] = (dict(lengths), avg)
+    return LENGTHS_BY_INDEX[key]
+
+
+def rank_bm25(query_terms: List[str], index: InvertedIndex, candidates: Set[str],
+              k1: float = 1.5, b: float = 0.75) -> List[Tuple[str, float]]:
+    """
+    Rank candidate documents with Okapi BM25.
+    idf(t) = log(1 + (N - df + 0.5) / (df + 0.5)), which is never negative.
+    score(q, d) = sum over the distinct query terms of idf(t) * tf * (k1 + 1) / (tf + k1 * (1 - b + b * |d| / avgdl))
+
+    :param k1: term frequency saturation
+    :param b: length normalisation (0 = none, 1 = full)
+    :return: [(pid, score)] sorted by descending score (ties broken by pid)
+    """
+    lengths, avgdl = document_lengths(index)
+    scores = {pid: 0.0 for pid in candidates}
+    for term in set(query_terms):
+        tid = index.vocab.get(term)
+        if tid is None:
+            continue
+        df = index.df[tid]
+        idf = math.log(1 + (index.n_docs - df + 0.5) / (df + 0.5))
+        plist = index.postings[tid]
+        for pid in candidates:
+            tf = plist.get(pid)
+            if tf:
+                scores[pid] += idf * tf * (k1 + 1) / (tf + k1 * (1 - b + b * lengths[pid] / avgdl))
+    ranked = list(scores.items())
+    ranked.sort(key=lambda x: (-x[1], x[0]))
+    return ranked
+
+
 # Registry of ranking functions. Every ranker has the signature
 # (query_terms, index, candidates) -> [(pid, score)] sorted by descending score.
-RANKINGS_LIST = {"tfidf": rank_tfidf}
+RANKINGS_LIST = {"tfidf": rank_tfidf, "bm25": rank_bm25}
 
 
 def search_in_corpus(query: str, index: InvertedIndex, top_k: int = None, ranking: str = "tfidf") -> List[Tuple[str, float]]:
