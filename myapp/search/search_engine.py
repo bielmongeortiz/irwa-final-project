@@ -1,36 +1,59 @@
-import random
-import numpy as np
+from pathlib import Path
 
-from myapp.search.objects import Document
+import pandas as pd
 
+from myapp.search.algorithms import load_ratings, search_in_corpus, train_word2vec
+from myapp.search.indexing import build_inverted_index, load_index
+from myapp.search.objects import ResultItem
+from myapp.search.preprocessing import preprocess_corpus
 
-def dummy_search(corpus: dict, search_id, num_results=20):
-    """
-    Just a demo method, that returns random <num_results> documents from the corpus
-    :param corpus: the documents corpus
-    :param search_id: the search id
-    :param num_results: number of documents to return
-    :return: a list of random documents from the corpus
-    """
-    res = []
-    doc_ids = list(corpus.keys())
-    docs_to_return = np.random.choice(doc_ids, size=num_results, replace=False)
-    for doc_id in docs_to_return:
-        doc = corpus[doc_id]
-        res.append(Document(pid=doc.pid, title=doc.title, description=doc.description,
-                            url="doc_details?pid={}&search_id={}&param2=2".format(doc.pid, search_id), ranking=random.random()))
-    return res
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
 
 class SearchEngine:
     """Class that implements the search engine logic"""
 
-    def search(self, search_query, search_id, corpus):
+    def __init__(self, corpus):
+        """
+        Prepare the processed corpus and the inverted index once, when the application starts.
+        The files saved by Parts 1 and 2 are loaded if both exist; otherwise both are built in memory.
+
+        :param corpus: the documents corpus (pid -> Document)
+        """
+        processed_path = DATA_DIR / "processed_corpus.pkl"
+        index_path = DATA_DIR / "inverted_index.pkl"
+        if processed_path.exists() and index_path.exists():
+            self.processed = pd.read_pickle(processed_path)
+            self.index = load_index(index_path)
+        else:
+            self.processed = preprocess_corpus(corpus)
+            self.index = build_inverted_index(self.processed)
+        # needed by the custom ranking
+        load_ratings(self.processed)
+        self.word2vec_ready = False
+
+    def search(self, search_query, search_id, corpus, ranking="bm25", top_k=20):
+        """
+        Search the products that contain all the query terms and rank them.
+
+        :param search_query: the text written by the user
+        :param search_id: id of this search, added to the result links
+        :param corpus: the documents corpus (pid -> Document)
+        :param ranking: "tfidf", "bm25", "custom" or "word2vec; bm25 by default, because we got the best results in Part 3"
+        :param top_k: maximum number of results (None = all)
+        :return: list of ResultItem, best first
+        """
         print("Search query:", search_query)
 
-        results = []
-        ### You should implement your search logic here:
-        results = dummy_search(corpus, search_id)  # replace with call to search algorithm
+        # word2vec is trained only the first time it is requested
+        if ranking == "word2vec" and not self.word2vec_ready:
+            train_word2vec(self.processed)
+            self.word2vec_ready = True
 
-        # results = search_in_corpus(search_query)
+        results = []
+        for pid, score in search_in_corpus(search_query, self.index, top_k=top_k, ranking=ranking):
+            doc = corpus[pid]
+            results.append(ResultItem(pid=pid, title=doc.title, description=doc.description,
+                                      url="doc_details?pid={}&search_id={}".format(pid, search_id),
+                                      ranking=score))
         return results

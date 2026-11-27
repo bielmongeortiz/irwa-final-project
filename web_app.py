@@ -29,8 +29,6 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 # open browser dev tool to see the cookies
 app.session_cookie_name = os.getenv("SESSION_COOKIE_NAME")
-# instantiate our search engine
-search_engine = SearchEngine()
 # instantiate our in memory persistence
 analytics_data = AnalyticsData()
 # instantiate RAG generator
@@ -41,6 +39,8 @@ full_path = os.path.realpath(__file__)
 path, filename = os.path.split(full_path)
 file_path = path + "/" + os.getenv("DATA_FILE_PATH")
 corpus = load_corpus(file_path)
+# instantiate our search engine
+search_engine = SearchEngine(corpus)
 # Log first element of corpus to verify it loaded correctly:
 print("\nCorpus is loaded... \n First element:\n", list(corpus.values())[0])
 
