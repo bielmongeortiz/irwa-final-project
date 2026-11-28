@@ -37,6 +37,23 @@ def conjunctive_retrieve(query_terms: List[str], index: InvertedIndex) -> Set[st
     return result
 
 
+def closest_match_retrieve(query_terms: List[str], index: InvertedIndex) -> Tuple[List[str], Set[str], int]:
+    """
+    Fallback when no document has every term: ignore unknown terms and
+    return the documents that contain the largest number of the others.
+
+    :return: (known terms, pids, number of terms those documents match)
+    """
+    known = [t for t in dict.fromkeys(query_terms) if t in index.vocab]
+    matches = Counter()
+    for term in known:
+        matches.update(index.postings[index.vocab[term]].keys())
+    if not matches:
+        return [], set(), 0
+    best = max(matches.values())
+    return known, {pid for pid, n in matches.items() if n == best}, best
+
+
 def rank_tfidf(query_terms: List[str], index: InvertedIndex, candidates: Set[str]) -> List[Tuple[str, float]]:
     """
     Rank candidate documents by cosine similarity between TF-IDF vectors.

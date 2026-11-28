@@ -1,7 +1,14 @@
 {% extends "base.html" %}
 {% block page_title %}{{ page_title }}{% endblock %}
 {% block content %}
-    Found <strong>{{ found_counter }}</strong> results...
+    Showing {{ results_list|length }} of <strong>{{ "{:,}".format(found_counter) }}</strong> results
+    for "{{ search_query }}"
+    {% if info.partial %}
+        <div class="alert alert-warning mt-3 mb-0">
+            No product contains all your words. Showing products that match {{ info.matched }} of {{ info.words }}.
+            {% if info.ignored %}Not found in the catalogue: {{ info.ignored|join(", ") }}.{% endif %}
+        </div>
+    {% endif %}
     <hr>
     {% if rag_response %}
         <div class="mb-4 p-3" style="border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9;">
@@ -11,17 +18,41 @@
     {% endif %}
     <hr>
     {% for item in results_list %}
-        <div class="pb-3">
-            <div class="doc-title">
-                <a href="{{ item.url }}">{{ item.title }}...
-                </a>
+        <div class="media pb-3 mb-3 border-bottom">
+            {% if item.images %}
+                <img class="result-image mr-3" src="{{ item.images[0] }}" alt="{{ item.title }}"
+                     loading="lazy" onerror="this.style.display='none'">
+            {% endif %}
+            <div class="media-body">
+                <h5 class="mb-1">{{ loop.index }}. <a href="{{ item.details_url }}">{{ item.title }}</a></h5>
+                <div class="text-muted small">
+                    {{ [item.brand, item.sub_category]|select|join(" · ") }}
+                    {% if item.out_of_stock %}<span class="badge badge-secondary">Out of stock</span>{% endif %}
+                </div>
+                <div>
+                    {% if item.selling_price is not none %}
+                        <strong>₹{{ "{:,.0f}".format(item.selling_price) }}</strong>
+                        {% if item.actual_price is not none and item.actual_price > item.selling_price %}
+                            <del class="text-muted ml-2">₹{{ "{:,.0f}".format(item.actual_price) }}</del>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">Price not available</span>
+                    {% endif %}
+                    {% if item.discount is not none %}
+                        <span class="text-success ml-2">{{ "{:.0f}".format(item.discount) }}% off</span>
+                    {% endif %}
+                    <span class="ml-3">
+                        {% if item.average_rating is not none %}★ {{ item.average_rating }} / 5{% else %}No rating{% endif %}
+                    </span>
+                </div>
+                {% if item.description %}
+                    <p class="mb-1">{{ item.description|truncate(200) }}</p>
+                {% endif %}
+                <a class="small" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">View on Flipkart ↗</a>
             </div>
-            <div class="doc-desc">
-                {{ item.doc_date }} — {{ item.description }}
-            </div>
-
         </div>
-
+    {% else %}
+        <p>None of your words appear in the catalogue. Check the spelling.</p>
     {% endfor %}
 {% endblock %}
 

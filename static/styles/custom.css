@@ -60,3 +60,10 @@ input[type=submit]:hover {
     font-size: 0.95em;
     adding-left: 5px;
 }
+
+
+.result-image {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+}

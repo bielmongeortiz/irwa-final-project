@@ -97,15 +97,9 @@ class StatsDocument(BaseModel):
         return self.model_dump_json()
 
 
-class ResultItem(BaseModel):
-    pid: str
-    title: str
-    description: Optional[str] = None
-    url: Optional[str] = None
+class ResultItem(Document):
+    """
+    A product returned by a search: all the Document fields plus the data of this search
+    """
+    details_url: Optional[str] = None
     ranking: Optional[float] = None
-
-    def __str__(self) -> str:
-        return self.model_dump_json(indent=2)
-    
-    def to_json(self):
-        return self.model_dump_json()

@@ -74,18 +74,19 @@ def search_form_post():
 
     search_id = analytics_data.save_query_terms(search_query)
 
-    results = search_engine.search(search_query, search_id, corpus)
+    results, info = search_engine.search(search_query, search_id, corpus)
 
     # generate RAG response based on user query and retrieved results
     rag_response = rag_generator.generate_response(search_query, results)
     print("RAG response:", rag_response)
 
-    found_count = len(results)
+    found_count = info["total"]
     session['last_found_count'] = found_count
 
     print(session)
 
-    return render_template('results.html', results_list=results, page_title="Results", found_counter=found_count, rag_response=rag_response)
+    return render_template('results.html', results_list=results, page_title="Results", found_counter=found_count, rag_response=rag_response,
+                           search_query=search_query, info=info)
 
 
 @app.route('/doc_details', methods=['GET'])
